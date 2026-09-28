@@ -1,15 +1,32 @@
-import { createClient } from '@supabase/supabase-js';
+// MOCK SUPABASE CLIENT FOR FRONTEND-ONLY DEMO
 
-const supabaseUrl = import.meta.env['VITE_SUPABASE_URL'];
-const supabaseAnonKey = import.meta.env['VITE_SUPABASE_ANON_KEY'];
+const mockQuery = {
+  select: () => mockQuery,
+  eq: () => mockQuery,
+  order: () => mockQuery,
+  limit: () => mockQuery,
+  maybeSingle: async () => ({ data: null, error: null }),
+  single: async () => ({ data: null, error: null }),
+  insert: async () => ({ data: null, error: null }),
+  delete: () => mockQuery,
+  then: (resolve: any) => resolve({ data: null, error: null })
+};
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn(
-    'Supabase URL or Anon Key is missing. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your .env file.'
-  );
-}
+const mockChannel = {
+  on: () => mockChannel,
+  subscribe: () => mockChannel
+};
 
-export const supabase = createClient(
-  supabaseUrl || 'https://placeholder.supabase.co',
-  supabaseAnonKey || 'placeholder-key'
-);
+export const supabase = {
+  auth: {
+    getSession: async () => ({ data: { session: null }, error: null }),
+    signInWithPassword: async () => ({ data: { user: { id: "mock_user" }, session: {} }, error: null }),
+    signUp: async () => ({ data: { user: { id: "mock_user", identities: [{}] }, session: {} }, error: null }),
+    signOut: async () => ({ error: null }),
+    onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } })
+  },
+  from: (table: string) => mockQuery,
+  rpc: async (fn: string, params: any) => ({ data: null, error: null }),
+  channel: (name: string) => mockChannel,
+  removeChannel: (channel: any) => {}
+} as any;

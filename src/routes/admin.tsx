@@ -51,50 +51,37 @@ function AdminPage() {
 
   useEffect(() => {
     if (user?.role === "admin") {
-      // Fetch integrations
-      supabase.from("integrations").select("*").order("name").then(({ data }) => {
-        if (data) setIntegrations(data);
-      });
-      // Fetch users (profiles)
-      supabase.from("profiles").select("*").then(({ data }) => {
-         if (data) setUsers(data);
-      });
+      setIntegrations([
+        { id: "1", name: "VirusTotal", api_key: "mock-vt-key", is_active: true },
+        { id: "2", name: "Zavu WhatsApp", api_key: "mock-zavu-key", is_active: true }
+      ] as any);
+      
+      setUsers([
+        { id: "1", full_name: "Demo Admin", whatsapp_number: "+966500000000", role: "admin", whatsapp_alerts_enabled: true },
+        { id: "2", full_name: "Analyst User", whatsapp_number: "+966500000001", role: "analyst", whatsapp_alerts_enabled: false }
+      ]);
     }
 
-    // Load initial real SOC logs
+    // Load initial real SOC logs (now mock)
     threatService.getLiveSocLogs().then((realLogs) => {
       setLogs(realLogs);
     });
 
-    // Realtime subscription for incoming live scans
-    const channel = supabase
-      .channel("admin-live-scans")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "scans" },
-        (payload) => {
-          const scan = payload.new as any;
-          const level: LogEntry["level"] =
-            scan.status === "malicious"
-              ? "critical"
-              : scan.status === "suspicious"
-              ? "warn"
-              : "info";
-          const newEntry: LogEntry = {
-            id: `rt_${scan.id}_${Date.now()}`,
-            time: scan.created_at || new Date().toISOString(),
-            level,
-            source: "VirusTotal Live",
-            message: `Live Scan Event: ${scan.target} analyzed (Risk: ${scan.risk_score}/100 - ${String(scan.status).toUpperCase()})`,
-          };
-          setLogs((prev) => [...prev.slice(-40), newEntry]);
-        }
-      )
-      .subscribe();
+    // Mock realtime live scans stream
+    const interval = setInterval(() => {
+      if (Math.random() > 0.8) {
+        const newEntry: LogEntry = {
+          id: `rt_mock_${Date.now()}`,
+          time: new Date().toISOString(),
+          level: Math.random() > 0.9 ? "critical" : Math.random() > 0.7 ? "warn" : "info",
+          source: "VirusTotal Live (Mock)",
+          message: `Live Scan Event: ${Math.random().toString(36).substring(7)}.com analyzed`,
+        };
+        setLogs((prev) => [...prev.slice(-40), newEntry]);
+      }
+    }, 5000);
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => clearInterval(interval);
   }, [user]);
 
   useEffect(() => {
@@ -103,17 +90,9 @@ function AdminPage() {
 
   const saveIntegration = async (id: string, key: string) => {
     const isActive = key.trim().length > 0;
-    const { error } = await supabase
-      .from("integrations")
-      .update({ api_key: key.trim(), is_active: isActive })
-      .eq("id", id);
-
-    if (error) {
-       toast.error(error.message);
-    } else {
-       setIntegrations(prev => prev.map(x => x.id === id ? { ...x, is_active: isActive } : x));
-       toast.success(t("save") + " " + "successful");
-    }
+    // Mock save
+    setIntegrations(prev => prev.map(x => x.id === id ? { ...x, api_key: key.trim(), is_active: isActive } : x));
+    toast.success(t("save") + " " + "successful");
   };
 
   // Emergency Alert Broadcast State

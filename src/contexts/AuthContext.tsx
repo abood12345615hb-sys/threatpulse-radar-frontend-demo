@@ -1,7 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { authService, type RegisterPayload } from "@/services/authService";
 import type { User } from "@/types";
-import { supabase } from "@/lib/supabase";
 
 interface AuthValue {
   user: User | null;
@@ -26,20 +25,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setReady(true);
     };
     initAuth();
-
-    // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_OUT') {
-        setUser(null);
-      } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        const u = await authService.current();
-        setUser(u);
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
   }, []);
 
   const wrap = async <T,>(fn: () => Promise<T>) => {
